@@ -4,11 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>IG Square Pro</title>
+    
     <!-- PWA 與 iOS 設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="IG Square">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/174/174855.png">
+    
+    <!-- App 圖示：你可以更換下方的 href 網址 -->
+    <!-- 建議使用 180x180 像素的 PNG 檔案 -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3659/3659899.png">
     
     <!-- 載入外部套件 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -153,7 +157,7 @@
 
             return (
                 <div className="min-h-screen flex flex-col items-center pb-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-                    <header className="w-full max-w-lg px-6 pt-10 mb-6">
+                    <header className="w-full max-w-lg px-6 pt-12 mb-6">
                         <h1 className="text-4xl font-black tracking-tight text-gray-900">IG Square</h1>
                         <p className="text-gray-500 text-sm font-medium mt-1">Batch Editor Pro</p>
                     </header>
