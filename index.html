@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>IG Square Pro</title>
+    <!-- PWA 與 iOS 設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="IG Square">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/174/174855.png">
+    
+    <!-- 載入外部套件 -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // 這裡放入我們之前的 App.jsx 邏輯
+        const { useState, useRef, useEffect } = React;
+        const { Camera, Download, Trash2, Maximize } = lucide;
+
+        function App() {
+            const [images, setImages] = useState([]);
+            const fileInputRef = useRef(null);
+            const CANVAS_SIZE = 1080;
+
+            const handleUpload = (e) => {
+                const files = Array.from(e.target.files);
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const initialScale = CANVAS_SIZE / Math.max(img.width, img.height);
+                            setImages(prev => [...prev, {
+                                id: crypto.randomUUID(),
+                                name: file.name.split('.')[0],
+                                element: img,
+                                scale: 1,
+                                baseScale: initialScale,
+                                offsetX: 0,
+                                offsetY: 0,
+                                bgColor: '#ffffff',
+                                isAdjusting: false,
+                                isExpanded: true
+                            }]);
+                        };
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            const download = (img) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = canvas.height = CANVAS_SIZE;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = img.bgColor;
+                ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+                const s = img.baseScale * img.scale;
+                const w = img.element.width * s;
+                const h = img.element.height * s;
+                ctx.drawImage(img.element, (CANVAS_SIZE-w)/2 + img.offsetX, (CANVAS_SIZE-h)/2 + img.offsetY, w, h);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+                const win = window.open();
+                win.document.write(`<html><body style="margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;min-height:100vh;"><img src="${dataUrl}" style="width:100%;max-width:500px;border-radius:15px;" /><p style="color:#fff;font-family:sans-serif;margin-top:20px;">長按圖片儲存</p><button onclick="window.close()" style="margin-top:20px;padding:12px 30px;border-radius:20px;border:none;">返回 App</button></body></html>`);
+            };
+
+            return (
+                <div className="min-h-screen bg-[#F2F2F7] flex flex-col items-center pb-32" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+                    <header className="w-full max-w-lg px-6 pt-8 mb-6">
+                        <h1 className="text-3xl font-extrabold">IG Square</h1>
+                        <p className="text-gray-500 text-sm">Batch Editor Pro</p>
+                    </header>
+                    <div className="w-full max-w-lg px-4 space-y-4">
+                        {images.map(img => (
+                            <div key={img.id} className="bg-white rounded-3xl p-4 shadow-sm border border-gray-100">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <img src={img.element.src} className="w-10 h-10 rounded-lg object-cover" />
+                                        <span className="font-bold text-sm truncate w-24">{img.name}</span>
+                                    </div>
+                                    <button onClick={() => download(img)} className="bg-blue-600 text-white px-4 py-2 rounded-full text-xs font-bold">儲存</button>
+                                </div>
+                                <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden mb-4">
+                                    <CanvasPreview img={img} size={CANVAS_SIZE} />
+                                </div>
+                                <div className="space-y-4">
+                                    <input type="range" min="0.5" max="2.5" step="0.01" value={img.scale} onChange={e => setImages(images.map(i => i.id === img.id ? {...i, scale: parseFloat(e.target.value)} : i))} className="w-full h-1 bg-gray-100 rounded-lg appearance-none accent-blue-600" />
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] font-bold text-gray-400">背景色</span>
+                                        <input type="color" value={img.bgColor} onChange={e => setImages(images.map(i => i.id === img.id ? {...i, bgColor: e.target.value} : i))} className="w-8 h-8 rounded-full border-none bg-transparent" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="fixed bottom-10 w-full max-w-xs z-50">
+                        <button onClick={() => fileInputRef.current.click()} className="w-full py-4 bg-black text-white rounded-2xl font-bold shadow-2xl flex items-center justify-center gap-2">批量選取相片</button>
+                    </div>
+                    <input type="file" ref={fileInputRef} onChange={handleUpload} multiple accept="image/*" className="hidden" />
+                </div>
+            );
+        }
+
+        function CanvasPreview({ img, size }) {
+            const ref = useRef(null);
+            useEffect(() => {
+                const ctx = ref.current.getContext('2d');
+                ctx.fillStyle = img.bgColor;
+                ctx.fillRect(0, 0, size, size);
+                const s = img.baseScale * img.scale;
+                const w = img.element.width * s;
+                const h = img.element.height * s;
+                ctx.drawImage(img.element, (size-w)/2 + img.offsetX, (size-h)/2 + img.offsetY, w, h);
+            }, [img]);
+            return <canvas ref={ref} width={size} height={size} className="w-full h-full object-contain" />;
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
